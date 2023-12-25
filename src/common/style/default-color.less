@@ -1,0 +1,112 @@
+@import "./color.less";
+
+// 背景颜色
+.bg-primary {
+  background-color: @color-primary;
+}
+.bg-success {
+  background-color: @color-success;
+}
+.bg-warning {
+  background-color: @color-warning;
+}
+.bg-danger {
+  background-color: @color-danger;
+}
+.bg-white {
+  background-color: @color-white;
+}
+
+
+// 字体颜色
+.color-primary {
+  color: @color-primary;
+}
+.color-success {
+  color: @color-success;
+}
+.color-warning {
+  color: @color-warning;
+}
+.color-danger {
+  color: @color-danger;
+}
+.color-white {
+  color: @color-white;
+}
+.color-primary-bg{
+  background: #e0eff7;
+  border-radius: 3px;
+  padding: 2px 3px;
+  font-weight: 600;
+}
+// tag 标记样式 
+// 包含tag公共样式
+// 包含tag success、primary、warning、danger、default(white)五大样式
+// 包含tag 审批状态 tag-0(新增)、tag-20(审批中)、tag-35(生效)、tag-40(终止)，tag-50(批准)五大样式
+.tag-common() {
+  font-size: 12px !important;
+  text-align: center;
+  padding: 5px 0.5rem;
+  border-radius: 2px;
+}
+
+.tag-success, .tag-0, .tag-info{
+  .tag-common();
+  color: @color-success;
+  background-color: #e7f6e8;
+}
+.tag-border-success, .tag-border-0, .tag-border-info{
+  .tag-common();
+  color: @color-success;
+  background-color: #e7f6e8;
+  border: 1px solid @color-success;
+}
+
+.tag-primary, .tag-20, .tag-active {
+  .tag-common();
+  color: @color-primary;
+  background-color: #f0fbfc;
+}
+.tag-border-primary, .tag-border-20, .tag-border-active {
+  .tag-common();
+  color: @color-primary;
+  background-color: #f0fbfc;
+  border: 1px solid @color-primary;
+}
+
+.tag-warning, .tag-35, .tag-orange {
+  .tag-common();
+  color: @color-warning;
+  background-color: #fff3e1;
+}
+.tag-border-warning, .tag-border-35, .tag-border-orange {
+  .tag-common();
+  color: @color-warning;
+  background-color: #fff3e1;
+  border: 1px solid @color-warning;
+}
+
+.tag-danger, .tag-40, .tag-red {
+  .tag-common();
+  color: @color-danger;
+  background-color: #ffebeb;
+}
+.tag-border-danger, .tag-border-40, .tag-border-red {
+  .tag-common();
+  color: @color-danger;
+  background-color: #ffebeb;
+  border: 1px solid @color-danger;
+}
+
+.tag-default,.tag-50, .tag-white {
+  .tag-common();
+  color: #666;
+  background-color: #f4f4f4;
+}
+.tag-border-default,.tag-border-50, .tag-border-white {
+  .tag-common();
+  color: #666;
+  background-color: #f4f4f4;
+  border: 1px solid #666;
+}
