@@ -1,14 +1,47 @@
 
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useStore = defineStore('use-store', () => {
-  const count = ref(0);
-  const doubleCount = computed(() => count.value * 2);
+  const threshold = (24 * 3600 * 1000);
 
-  function increment() {
-    count.value++;
+  const last = ref(0);
+  const isShowBar = ref(true);
+
+  const setLast = () => {
+    const timer = Date.now();
+    last.value = timer;
+  };
+
+  const getLast = () => {
+    return last.value;
   }
 
-  return { count, doubleCount, increment }
-});
+  const isExpired = () => {
+    if (last.value === 0) {
+      return true;
+    }
+
+    const current = Date.now();
+    const diff = current - last.value;
+    
+    return (diff > threshold) ? true : false;
+  };
+
+  const showBar = () => {
+    isShowBar.value = true;
+  };
+  const hideBar = () => {
+    isShowBar.value = false;
+  };
+
+  return {
+    last,
+    setLast,
+    getLast,
+    isShowBar,
+    showBar,
+    hideBar,
+    isExpired,
+  }
+}, { persist: true });
