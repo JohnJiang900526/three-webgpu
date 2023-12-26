@@ -40,6 +40,7 @@ export class Model {
     
     // 场景
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x333333);
 
     // 相机
     this.camera = new THREE.PerspectiveCamera(70, this.aspect, 1, 3500);
@@ -78,7 +79,9 @@ export class Model {
     // @ts-ignore
     this.stats.domElement.style.position = "absolute";
     // @ts-ignore
-    this.stats.domElement.style.top = "50px";
+    this.stats.domElement.style.bottom = "0px";
+    // @ts-ignore
+    this.stats.domElement.style.top = "unset";
     // @ts-ignore
     this.container.appendChild(this.stats.domElement);
   }

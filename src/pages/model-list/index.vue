@@ -15,12 +15,18 @@
       <div class="content">
         <div v-if="list.length > 0" class="list-content">
           <cell-group title="WebGPU">
-            <cell v-for="item in list" is-link @click="openLink(item.path)" :key="item.path" :title="formatTitle(item)" />
+            <cell v-for="item in list" is-link @click="openLink(item.path)" :key="item.path">
+              <template #title>
+                <span :class="`title ${ isActive(item) }`">{{ formatTitle(item) }}</span>
+              </template>
+            </cell>
           </cell-group>
         </div>
         <div v-else>
           <Empty image="search" description="没有匹配到对应的模型，请重新搜索" />
         </div>
+
+        <div style="height: 200px;"></div>
       </div>
     </div>
     <div class="main-content">
@@ -30,14 +36,15 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { RouteRecordRaw, RouterView, useRouter } from "vue-router";
-import { Cell, CellGroup } from 'vant';
+import { RouteRecordRaw, RouterView, useRouter, useRoute } from "vue-router";
+import { Cell, CellGroup, Empty } from 'vant';
 import { storeToRefs } from "pinia";
 import { useStore } from '@/store';
 import { routerList } from '@/router/list';
 import { cloneDeep } from "lodash";
 
 const router = useRouter();
+const route = useRoute();
 const store = useStore();
 const { isShowBar } = storeToRefs(store);
 
@@ -47,12 +54,15 @@ const left = computed<string>(() => {
   if (isShowBar.value) {
     return "0px";
   } else {
-    return "-300px";
+    return "-350px";
   }
 });
 
 const formatTitle = (item: RouteRecordRaw) => {
   return item?.meta?.title as string;
+};
+const isActive = (item: RouteRecordRaw) => {
+  return (route.path === item?.path) ? "active": "";
 };
 
 const openLink = (path: string) => {
@@ -84,7 +94,7 @@ const hideBarHandle = () => {
     z-index: 1;
     text-align: center;
     cursor: pointer;
-    background-color: #333;
+    background-color: #000;
     padding: 4px 5px;
     border-top-right-radius: 15px;
     border-bottom-right-radius: 15px;
@@ -105,10 +115,11 @@ const hideBarHandle = () => {
     z-index: 10;
     overflow-x: visible;
     overflow-y: auto;
-    background-color: #333;
+    background-color: #333333c2;
     display: flex;
     flex-direction: column;
-    transition: left 0.5s;
+    transition: left 0.25s;
+    border-right: 1px solid #656565;
 
     .header {
       flex: 0 0 45px;
@@ -159,6 +170,13 @@ const hideBarHandle = () => {
         --van-cell-group-background: transparent !important;
         --van-cell-text-color: #fff;
         --van-cell-active-color: #999 !important;
+        .title {
+          transition: all 0.5s;
+
+          &.active {
+            color: #1989fa;
+          }
+        }
       }
     }
   }

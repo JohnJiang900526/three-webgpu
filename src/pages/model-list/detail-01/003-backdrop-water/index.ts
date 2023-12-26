@@ -1,7 +1,3 @@
-import { defineAsyncComponent } from "vue"
-
-const BackdropWater = defineAsyncComponent(() => {
-  return import("./index.vue");
-});
+const BackdropWater = () => import("./index.vue");
 
 export default BackdropWater;

@@ -1,7 +1,3 @@
-import { defineAsyncComponent } from "vue"
-
-const DepthBuffer = defineAsyncComponent(() => {
-  return import("./index.vue");
-});
+const DepthBuffer = () => import("./index.vue");
 
 export default DepthBuffer;
