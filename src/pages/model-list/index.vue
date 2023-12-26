@@ -15,7 +15,7 @@
       <div class="content">
         <div v-if="list.length > 0" class="list-content">
           <cell-group title="WebGPU">
-            <cell v-for="item in list" is-link @click="openLink(item.path)" :key="item.key" :title="item.title" />
+            <cell v-for="item in list" is-link @click="openLink(item.path)" :key="item.path" :title="formatTitle(item)" />
           </cell-group>
         </div>
         <div v-else>
@@ -30,32 +30,18 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { RouterView, useRouter } from "vue-router";
+import { RouteRecordRaw, RouterView, useRouter } from "vue-router";
 import { Cell, CellGroup } from 'vant';
 import { storeToRefs } from "pinia";
 import { useStore } from '@/store';
+import { routerList } from '@/router/list';
+import { cloneDeep } from "lodash";
 
 const router = useRouter();
 const store = useStore();
 const { isShowBar } = storeToRefs(store);
 
-const list = ref<any[]>([
-  {
-    key: "030",
-    title: "030.WEBGL Geometry挤压形状",
-    path: "/list/geometry-extrude-shape"
-  },
-  {
-    key: "029",
-    title: "029.WEBGL Geometry动态",
-    path: "/list/geometry-dynamic"
-  },
-  {
-    key: "028",
-    title: "028.WEBGL Geometry立方体",
-    path: "/list/geometry-cube"
-  },
-]);
+const list = ref<RouteRecordRaw[]>([...cloneDeep(routerList.reverse())]);
 
 const left = computed<string>(() => {
   if (isShowBar.value) {
@@ -64,6 +50,10 @@ const left = computed<string>(() => {
     return "-300px";
   }
 });
+
+const formatTitle = (item: RouteRecordRaw) => {
+  return item?.meta?.title as string;
+};
 
 const openLink = (path: string) => {
   router.push(path);
@@ -168,12 +158,13 @@ const hideBarHandle = () => {
         --van-cell-background: transparent !important;
         --van-cell-group-background: transparent !important;
         --van-cell-text-color: #fff;
-        --van-cell-active-color: transparent !important;
+        --van-cell-active-color: #999 !important;
       }
     }
   }
 
   .main-content {
     .width-and-height();
+    position: relative;
   }
 }</style>

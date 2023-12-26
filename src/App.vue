@@ -17,8 +17,6 @@ onMounted(() => {
 const initHandle = () => {
   if (store.isExpired()) {
     router.replace("/");
-  } else {
-    router.replace("/list");
   }
 };
 </script>

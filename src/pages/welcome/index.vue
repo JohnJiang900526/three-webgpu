@@ -28,8 +28,6 @@ import logo from "@/assets/favicon_white.ico";
   const initHandle = () => {
     if (store.isExpired()) {
       router.replace("/");
-    } else {
-      router.replace("/list");
     }
   };
 
