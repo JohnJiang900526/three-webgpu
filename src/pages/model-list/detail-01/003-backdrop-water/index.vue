@@ -31,13 +31,9 @@ onBeforeUnmount(() => {
       position: relative;
       .width-and-height();
       .lil-gui.root {
-        max-height: 50%;
-        max-width: 80%;
         position: absolute;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        right: auto;
+        top: 0px;
+        right: 0px;
       }
     }
   }

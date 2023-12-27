@@ -30,7 +30,8 @@
       </div>
     </div>
     <div class="main-content">
-      <RouterView />
+      <Welcome v-if="route.path === '/list'"/>
+      <RouterView v-else/>
     </div>
   </div>
 </template>
@@ -42,6 +43,7 @@ import { storeToRefs } from "pinia";
 import { useStore } from '@/store';
 import { routerList } from '@/router/list';
 import { cloneDeep } from "lodash";
+import Welcome from "./welcome/index.vue";
 
 const router = useRouter();
 const route = useRoute();
