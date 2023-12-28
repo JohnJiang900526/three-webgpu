@@ -1,11 +1,11 @@
 import type { RouteRecordRaw } from "vue-router";
 
 
-import Backdrop from "@/pages/model-list/detail-01/001-backdrop";
-import BackdropArea from "@/pages/model-list/detail-01/002-backdrop-area";
-import BackdropWater from "@/pages/model-list/detail-01/003-backdrop-water";
-import DepthBuffer from "@/pages/model-list/detail-01/004-logarithmic-depth-buffer";
-import ClearCoat from "@/pages/model-list/detail-01/005-clearcoat";
+import Backdrop from "@/pages/model-list/detail-01/001-backdrop/index.vue";
+import BackdropArea from "@/pages/model-list/detail-01/002-backdrop-area/index.vue";
+import BackdropWater from "@/pages/model-list/detail-01/003-backdrop-water/index.vue";
+import DepthBuffer from "@/pages/model-list/detail-01/004-logarithmic-depth-buffer/index.vue";
+import ClearCoat from "@/pages/model-list/detail-01/005-clearcoat/index.vue";
 
 
 const routerList: RouteRecordRaw[] = [
