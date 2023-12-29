@@ -88,8 +88,12 @@ export class Model {
     // 控制器
     this.controls = new OrbitControls(this.camera, this.renderer?.domElement);
     this.controls.target.set(0, 1, 0);
-    this.controls.addEventListener('start', () => this.rotate = false);
-    this.controls.addEventListener('end', () => this.rotate = true);
+    this.controls.addEventListener('start', () => {
+      this.rotate = false
+    });
+    this.controls.addEventListener('end', () => {
+      this.rotate = true
+    });
     this.controls.update();
 
     this.initStats();
@@ -100,28 +104,6 @@ export class Model {
   isMobile() {
     const userAgent = window.navigator.userAgent.toLowerCase();
     return userAgent.includes("mobile");
-  }
-
-  private addBackdropSphere(backdropNode: any, backdropAlphaNode = null) {
-    const distance = 1;
-    const id = this.portals.children.length;
-    const rotation = THREE.MathUtils.degToRad(id * 45);
-
-    const material = new MeshStandardNodeMaterial({ color: 0x0066ff });
-    material.roughnessNode = float(.2);
-    material.metalnessNode = float(0);
-    material.backdropNode = backdropNode;
-    material.backdropAlphaNode = backdropAlphaNode;
-    material.transparent = true;
-
-    const mesh = new THREE.Mesh(this.geometry, material);
-    mesh.position.set(
-      Math.cos(rotation) * distance,
-      1,
-      Math.sin(rotation) * distance
-    );
-
-    this.portals.add(mesh);
   }
 
   private generateLight() {
@@ -150,14 +132,37 @@ export class Model {
   }
 
   private createSphere() {
-    this.addBackdropSphere(viewportSharedTexture().bgr.hue(oscSine().mul(Math.PI)));
-    this.addBackdropSphere(viewportSharedTexture().rgb.oneMinus());
-    this.addBackdropSphere(viewportSharedTexture().rgb.saturation(0));
-    this.addBackdropSphere(viewportSharedTexture().rgb.saturation(10), oscSine());
-    this.addBackdropSphere(viewportSharedTexture().rgb.overlay(checker(uv().mul(10))));
-    this.addBackdropSphere(viewportSharedTexture(viewportTopLeft.mul(40).floor().div(40)));
-    this.addBackdropSphere(viewportSharedTexture(viewportTopLeft.mul(80).floor().div(80)).add(color(0x0033ff)));
-    this.addBackdropSphere(vec3(0, 0, viewportSharedTexture().b));
+    const shared = viewportSharedTexture;
+
+    this.addBackdropSphere(shared().bgr.hue(oscSine().mul(Math.PI)));
+    this.addBackdropSphere(shared().rgb.oneMinus());
+    this.addBackdropSphere(shared().rgb.saturation(0));
+    this.addBackdropSphere(shared().rgb.saturation(10), oscSine());
+    this.addBackdropSphere(shared().rgb.overlay(checker(uv().mul(10))));
+    this.addBackdropSphere(shared(viewportTopLeft.mul(40).floor().div(40)));
+    this.addBackdropSphere(shared(viewportTopLeft.mul(80).floor().div(80)).add(color(0x0033ff)));
+    this.addBackdropSphere(vec3(0, 0, shared().b));
+  }
+
+  private addBackdropSphere(backdropNode: any, backdropAlphaNode = null) {
+    const distance = 1;
+    const length = this.portals.children.length;
+    const rotation = THREE.MathUtils.degToRad(length * 45);
+
+    const material = new MeshStandardNodeMaterial({ color: 0x0066ff });
+    material.roughnessNode = float(0.2);
+    material.metalnessNode = float(0);
+    material.backdropNode = backdropNode;
+    material.backdropAlphaNode = backdropAlphaNode;
+    material.transparent = true;
+
+    const mesh = new THREE.Mesh(this.geometry, material);
+    mesh.position.set(
+      Math.cos(rotation) * distance,
+      1,
+      Math.sin(rotation) * distance,
+    );
+    this.portals.add(mesh);
   }
 
   // 创建渲染器
