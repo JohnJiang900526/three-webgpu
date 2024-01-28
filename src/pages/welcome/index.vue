@@ -59,7 +59,8 @@ import logo from "@/assets/favicon_white.ico";
           height: 100px;
           display: block;
           margin: 0 auto;
-          animation: App-logo-spin infinite 5s linear;
+          animation: app-logo-spin infinite 5s linear;
+          pointer-events: none;
         }
       }
       .title {
@@ -86,7 +87,7 @@ import logo from "@/assets/favicon_white.ico";
     }
   }
 
-  @keyframes App-logo-spin {
+  @keyframes app-logo-spin {
     from {
       transform: rotate(0deg);
     }

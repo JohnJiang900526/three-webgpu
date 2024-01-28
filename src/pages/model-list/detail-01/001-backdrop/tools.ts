@@ -88,11 +88,12 @@ export class Model {
     // 控制器
     this.controls = new OrbitControls(this.camera, this.renderer?.domElement);
     this.controls.target.set(0, 1, 0);
+    this.controls.enableDamping = true;
     this.controls.addEventListener('start', () => {
-      this.rotate = false
+      this.rotate = false;
     });
     this.controls.addEventListener('end', () => {
-      this.rotate = true
+      this.rotate = true;
     });
     this.controls.update();
 
