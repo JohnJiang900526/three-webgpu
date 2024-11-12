@@ -112,7 +112,7 @@ export class Model {
     this.controls = new OrbitControls(this.camera, this.renderer?.domElement);
     this.controls.minDistance = 1;
     this.controls.maxDistance = 10;
-    this.controls.maxPolarAngle = Math.PI * 0.9;
+    this.controls.maxPolarAngle = Math.PI * 0.5;
     this.controls.target.set(0, 1, 0);
     this.controls.update();
 
@@ -180,7 +180,7 @@ export class Model {
 
     const x = (((column - 1) * scale) * -0.5);
     const y = -0.3;
-    const z = ((count / column) * scale) * - 0.5;
+    const z = (((count / column) * scale) * - 0.5);
     this.objects.position.set(x, y, z);
     this.scene.add(this.objects);
   }
@@ -240,7 +240,7 @@ export class Model {
   }
 
   private initGUI() {
-    this.gui.add(this.floorPosition, 'y', 0, 2, .001).name('position');
+    this.gui.add(this.floorPosition, 'y', 0, 2, 0.001).name('地板位置');
   }
 
   // 性能统计
