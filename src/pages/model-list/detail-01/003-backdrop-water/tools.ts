@@ -19,7 +19,6 @@ import {
 } from '@/common/jsm/nodes/Nodes.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import WebGPURenderer from '@/common/jsm/renderers/webgpu/WebGPURenderer.js';
-import { sample } from 'lodash';
 
 
 export class Model {
@@ -69,7 +68,6 @@ export class Model {
       autoPlace: false,
       container: this.container,
     });
-    this.gui.hide();
 
     const textureLoader = new THREE.TextureLoader();
     const iceDiffuse = textureLoader.load('/examples/textures/water.jpg');
@@ -118,6 +116,7 @@ export class Model {
     this.controls.target.set(0, 1, 0);
     this.controls.update();
 
+    this.initGUI();
     this.initStats();
     // this.animate();
     this.resize();
@@ -238,6 +237,10 @@ export class Model {
       this.animate();
     });
     this.container.appendChild(this.renderer.domElement);
+  }
+
+  private initGUI() {
+    this.gui.add(this.floorPosition, 'y', 0, 2, .001).name('position');
   }
 
   // 性能统计
