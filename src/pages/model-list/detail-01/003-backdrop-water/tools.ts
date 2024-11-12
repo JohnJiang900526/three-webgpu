@@ -126,22 +126,22 @@ export class Model {
   private addLight() {
     const sunLight = new THREE.DirectionalLight(0xFFE499, 5);
     sunLight.castShadow = true;
+
     sunLight.shadow.camera.near = 0.1;
     sunLight.shadow.camera.far = 3;
     sunLight.shadow.camera.right = 2;
     sunLight.shadow.camera.left = -2;
     sunLight.shadow.camera.top = 2;
     sunLight.shadow.camera.bottom = -2;
+
     sunLight.shadow.mapSize.set(2048, 2048);
     sunLight.shadow.bias = -0.001;
     sunLight.position.set(1, 3, 1);
 
+    
     const waterLight = new THREE.HemisphereLight(0x333366, 0x74ccf4, 5);
     const skyLight = new THREE.HemisphereLight(0x74ccf4, 0, 1);
-
-    this.scene.add(sunLight);
-    this.scene.add(skyLight);
-    this.scene.add(waterLight);
+    this.scene.add(sunLight, skyLight, waterLight);
   }
 
   // model
