@@ -3,6 +3,7 @@ import GUI from 'lil-gui';
 import Stats from 'stats.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+
 export class Model {
   private width: number;
   private height: number;
@@ -16,6 +17,12 @@ export class Model {
 
   private controls: null | OrbitControls;
   private gui: GUI;
+  private mixer: THREE.AnimationMixer | null;
+  private objects: THREE.Group;
+  private clock: THREE.Clock;
+  private model: null | THREE.Scene;
+  private floor: THREE.Mesh;
+  private floorPosition: THREE.Vector3;
   constructor(container: HTMLDivElement) {
     this.container = container;
     this.width = this.container.offsetWidth;
@@ -28,6 +35,12 @@ export class Model {
     this.animateNumber = 0;
 
     this.controls = null;
+    this.mixer = null;
+    this.objects = new THREE.Group;
+    this.clock = new THREE.Clock();
+    this.model = null;
+    this.floor = new THREE.Mesh();
+    this.floorPosition = new THREE.Vector3(0, 1, 0);
     this.gui = new GUI({
       title: "控制面板",
       autoPlace: false,
@@ -56,6 +69,10 @@ export class Model {
     this.initStats();
     this.animate();
     this.resize();
+  }
+
+  check() {
+
   }
 
   // 判断是否为移动端
