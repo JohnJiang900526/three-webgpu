@@ -13,4 +13,8 @@ pinia.use(persistedstate);
 app.use(pinia);
 app.use(router);
 
+app.config.warnHandler = () => {
+  return false;
+}
+
 app.mount('#app');
