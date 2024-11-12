@@ -98,24 +98,27 @@ export class Model {
     this.renderer?.render(this.scene, this.camera!);
   }
 
+  private resizeHandle() {
+    this.width = this.container.offsetWidth;
+    this.height = this.container.offsetHeight;
+    this.aspect = this.width/this.height;
+
+    this.camera!.aspect = this.aspect;
+    // 更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
+    this.camera!.updateProjectionMatrix();
+
+    this.renderer!.setSize(this.width, this.height);
+  }
+
   // 消除 副作用
   dispose() {
     window.cancelAnimationFrame(this.animateNumber);
+    window.removeEventListener("resize", this.resizeHandle);
   }
 
   // 处理自适应
   resize() {
-    window.onresize = () => {
-      this.width = this.container.offsetWidth;
-      this.height = this.container.offsetHeight;
-      this.aspect = this.width/this.height;
-
-      this.camera!.aspect = this.aspect;
-      // 更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
-      this.camera!.updateProjectionMatrix();
-
-      this.renderer!.setSize(this.width, this.height);
-    };
+    window.addEventListener("resize", this.resizeHandle);
   }
 }
 
