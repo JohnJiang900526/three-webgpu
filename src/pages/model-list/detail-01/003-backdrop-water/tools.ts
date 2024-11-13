@@ -118,7 +118,6 @@ export class Model {
 
     this.initGUI();
     this.initStats();
-    // this.animate();
     this.resize();
   }
 
@@ -127,6 +126,13 @@ export class Model {
     const sunLight = new THREE.DirectionalLight(0xFFE499, 5);
     sunLight.castShadow = true;
 
+    // 正交相机（OrthographicCamera）
+    // left — 摄像机视锥体左侧面
+    // right — 摄像机视锥体右侧面
+    // top — 摄像机视锥体上侧面
+    // bottom — 摄像机视锥体下侧面
+    // near — 摄像机视锥体近端面
+    // far — 摄像机视锥体远端面
     sunLight.shadow.camera.near = 0.1;
     sunLight.shadow.camera.far = 3;
     sunLight.shadow.camera.right = 2;
@@ -134,7 +140,15 @@ export class Model {
     sunLight.shadow.camera.top = 2;
     sunLight.shadow.camera.bottom = -2;
 
+    // .mapSize : Vector2
+    // 一个Vector2定义阴影贴图的宽度和高度。
+    // 较高的值会以计算时间为代价提供更好的阴影质量。值必须是2的幂，直
+    // 到给定设备的WebGLRenderer.capabilities.maxTextureSize， 虽然
+    // 宽度和高度不必相同（例如，（512,1024）有效）。 默认值为（512,512）
     sunLight.shadow.mapSize.set(2048, 2048);
+    // .bias : Float
+    // 阴影贴图偏差，在确定曲面是否在阴影中时，从标准化深度添加或减去多少
+    // 默认值为0.此处非常小的调整（大约0.0001）可能有助于减少阴影中的伪影
     sunLight.shadow.bias = -0.001;
     sunLight.position.set(1, 3, 1);
 
@@ -153,6 +167,12 @@ export class Model {
       this.model.children[0].children[0].castShadow = true;
 
       this.mixer = new THREE.AnimationMixer(this.model);
+      // .clipAction (clip : AnimationClip, optionalRoot : Object3D) : AnimationAction
+      // 返回所传入的剪辑参数的AnimationAction, 根对象参数可选，默认值为混合器的默认根对象。
+      // 第一个参数可以是动画剪辑(AnimationClip)对象或者动画剪辑的名称。
+
+      // 如果不存在符合传入的剪辑和根对象这两个参数的动作, 该方法将会创建一个。传入相同的参数
+      // 多次调用将会返回同一个剪辑实例。
       const action = this.mixer.clipAction(gltf.animations[0]);
       action.play();
 
@@ -162,16 +182,16 @@ export class Model {
 
   // objects
   private addObjects() {
+    // 二十面缓冲几何体（IcosahedronGeometry）
+    // IcosahedronGeometry(radius : Float, detail : Integer)
+    // radius — 二十面体的半径，默认为1。
+    // detail — 默认值为0。将这个值设为一个大于0的数将会为它增加一些顶点，
+    // 使其不再是一个二十面体。当这个值大于1的时候，实际上它将变成一个球体。
     const geometry = new THREE.IcosahedronGeometry(1, 3);
-
-    const count = 100;
-    const scale = 3.5;
-    const column = 10;
+    const count = 100, scale = 3.5, column = 10;
 
     for (let i = 0; i < count; i++) {
-      const x = i % column;
-      const y = i / column;
-
+      const x = i % column, y = i / column;
       const mesh = new THREE.Mesh(geometry, this.material);
       mesh.position.set(x * scale, 0, y * scale);
       mesh.rotation.set(Math.random(), Math.random(), Math.random());
@@ -180,10 +200,11 @@ export class Model {
 
     const x = (((column - 1) * scale) * -0.5);
     const y = -0.3;
-    const z = (((count / column) * scale) * - 0.5);
+    const z = (((count / column) * scale) * -0.5);
     this.objects.position.set(x, y, z);
     this.scene.add(this.objects);
   }
+
   // water
   private addWater() {
     const depthEffect = depthTexture().distance(depth).remapClamp(0, .05);
@@ -203,21 +224,38 @@ export class Model {
     this.scene.add(water);
   }
   private addFloor() {
-    this.floor = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.1, 1.1, 10), 
-      new MeshStandardNodeMaterial({ colorNode: this.iceColorNode })
-    );
+    // 圆柱缓冲几何体（CylinderGeometry）
+    // CylinderGeometry(
+    //   radiusTop : Float, 
+    //   radiusBottom : Float, 
+    //   height : Float, 
+    //   radialSegments : Integer, 
+    //   heightSegments : Integer, 
+    //   openEnded : Boolean, 
+    //   thetaStart : Float, 
+    //   thetaLength : Float
+    // )
+    // radiusTop — 圆柱的顶部半径，默认值是1;
+    // radiusBottom — 圆柱的底部半径，默认值是1;
+    // height — 圆柱的高度，默认值是1;
+    // radialSegments — 圆柱侧面周围的分段数，默认为32;
+    // heightSegments — 圆柱侧面沿着其高度的分段数，默认值为1;
+    // openEnded — 一个Boolean值，指明该圆锥的底面是开放的还是封顶的。默认值为false，即其底面默认是封顶的;
+    // thetaStart — 第一个分段的起始角度，默认为0。（three o'clock position）;
+    // thetaLength — 圆柱底面圆扇区的中心角，通常被称为“θ”（西塔）。默认值是2*Pi，这使其成为一个完整的圆柱。
+    const geometry = new THREE.CylinderGeometry(1.1, 1.1, 10);
+    const material = new MeshStandardNodeMaterial({ colorNode: this.iceColorNode });
+    this.floor = new THREE.Mesh(geometry, material);
     this.floor.position.set(0, -5, 0);
     this.scene.add(this.floor);
 
     const waterPosY = positionWorld.y.sub(this.water.position.y);
-    let transition = waterPosY.add(.1).saturate().oneMinus();
+    let transition = waterPosY.add(0.1).saturate().oneMinus();
     transition = waterPosY.lessThan(0).cond(transition, normalWorld.y.mix(transition, 0)).toVar();
 
-    const colorNode = transition.mix(
-      this.material.colorNode, 
-      this.material.colorNode.add(this.waterLayer0)
-    );
+    const node1 = this.material.colorNode;
+    const node2 = this.material.colorNode.add(this.waterLayer0);
+    const colorNode = transition.mix(node1, node2);
     (this.floor.material as any).colorNode = colorNode;
   }
 
