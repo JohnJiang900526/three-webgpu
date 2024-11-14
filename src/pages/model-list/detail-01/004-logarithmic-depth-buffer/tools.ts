@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import GUI from 'lil-gui';
 import Stats from 'stats.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import WebGPU from '@/common/jsm/capabilities/WebGPU.js';
@@ -13,15 +12,10 @@ let func = () => {};
 export class Model {
   private width: number;
   private height: number;
-  private aspect: number;
   private container: HTMLDivElement;
-  private scene: THREE.Scene;
-  private renderer: null | THREE.WebGLRenderer;
-  private camera: null | THREE.PerspectiveCamera;
   private stats: null | Stats;
   private animateNumber: number;
 
-  private controls: null | OrbitControls;
   private NEAR: number;
   private FAR: number;
   private screensplit: number;
@@ -44,14 +38,9 @@ export class Model {
     this.container = container;
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    this.aspect = this.width/this.height;
-    this.scene = new THREE.Scene();
-    this.renderer = null;
-    this.camera = null;
     this.stats = null;
     this.animateNumber = 0;
 
-    this.controls = null;
     this.gui = new GUI({
       title: "控制面板",
       autoPlace: false,
@@ -246,7 +235,6 @@ export class Model {
   private resizeHandle() {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    this.aspect = this.width / this.height;
 
     this.screensplit_right = 1 - this.screensplit;
 
