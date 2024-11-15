@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
 				top: 0;
 				left: 25%;
 				bottom: 0;
-				width: 2px;
+				width: 4px;
 				z-index: 10;
 				opacity: 0.8;
 				background: #ccc;
