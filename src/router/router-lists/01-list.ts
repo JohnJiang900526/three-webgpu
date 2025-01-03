@@ -11,7 +11,7 @@ import ClearCoat from "@/pages/model-list/detail-01/005-clearcoat";
 const routerList: RouteRecordRaw[] = [
   {
     path: '/list/clearcoat',
-    meta: {title: "实验确定"},
+    meta: {title: "油漆"},
     component: ClearCoat,
   },
   {
