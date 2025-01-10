@@ -86,6 +86,7 @@ export class Model {
     this.controls.update();
 
     this.bind();
+    this.initGUI();
     this.initStats();
     this.resize();
   }
@@ -108,11 +109,17 @@ export class Model {
   }
 
   private bind() {
-    document.onclick = () => {
-      if (!this.loading) {
-        this.playAudioBuffer();
-      }
+    this.container.onclick = () => {
+      if (this.loading) { return false; }
+      this.playAudioBuffer();
     };
+  }
+
+  private initGUI() {
+    this.gui.add(this.pitch, 'value', .5, 2, 0.01).name('高音');
+    this.gui.add(this.delayVolume, 'value', 0, 1, .01).name('延迟声音');
+    this.gui.add(this.delayOffset, 'value', .1, 1, .01).name('延迟补偿');
+    this.gui.show();
   }
 
   // 判断是否为移动端
@@ -126,36 +133,34 @@ export class Model {
       this.currentAudio.stop();
     }
 
-    // compute audio
+    // 计算音频
     this.renderer?.compute(this.computeNode);
 
     const buffer = await this.renderer!.getArrayBufferAsync(this.waveGPUBuffer);
     const waveArray = new Float32Array(buffer);
-    // play result
-    const audioOutputContext = new AudioContext({ 
-      sampleRate: this.sampleRate 
-    });
-    const audioOutputBuffer = audioOutputContext.createBuffer(
+    // 表现结果
+    const context = new AudioContext({ sampleRate: this.sampleRate });
+    const audioOutputBuffer = context.createBuffer(
       1,
-      waveArray.length, 
+      waveArray.length,
       this.sampleRate
     );
     audioOutputBuffer.copyToChannel(waveArray, 0);
 
-    const source = audioOutputContext.createBufferSource();
-    source.connect(audioOutputContext.destination);
-    source.buffer = audioOutputBuffer;
-    source.start();
+    this.currentAudio = context.createBufferSource();
+    this.currentAudio.connect(context.destination);
+    this.currentAudio.buffer = audioOutputBuffer;
+    this.currentAudio.start();
 
-    this.currentAudio = source;
-    // visual feedback
-    this.currentAnalyser = audioOutputContext.createAnalyser();
+    this.currentAudio = this.currentAudio;
+    // 视觉反馈
+    this.currentAnalyser = context.createAnalyser();
     this.currentAnalyser.fftSize = 2048;
-    source.connect(this.currentAnalyser);
+    this.currentAudio.connect(this.currentAnalyser);
   }
 
   private async createAudio() {
-    // audio buffer
+    // 音频缓冲区
     const url = "/examples/sounds/webgpu-audio-processing.mp3";
     const soundBuffer = await fetch(url).then(res => res.arrayBuffer());
     const audioContext = new AudioContext();
@@ -163,28 +168,25 @@ export class Model {
     const audioBuffer = await audioContext.decodeAudioData(soundBuffer);
     this.waveBuffer = audioBuffer.getChannelData(0);
 
-    // adding extra silence to delay and pitch
+    // 增加额外的沉默延迟和音高
     this.waveBuffer = new Float32Array([...this.waveBuffer, ...new Float32Array(200000)]);
-    this.sampleRate = audioBuffer.sampleRate / audioBuffer.numberOfChannels;
+    this.sampleRate = (audioBuffer.sampleRate / audioBuffer.numberOfChannels);
 
-    // create webgpu buffers
+    // 创建 webgpu 缓冲区
     this.waveGPUBuffer = new THREE.InstancedBufferAttribute(this.waveBuffer, 1);
     const waveStorageNode = storage(this.waveGPUBuffer, 'float', this.waveBuffer.length);
 
-    // read-only buffer
-    const waveNode = storage(
-      new THREE.InstancedBufferAttribute(this.waveBuffer, 1), 
-      'float', 
-      this.waveBuffer.length
-    );
+    // read-only 缓冲区
+    const value = new THREE.InstancedBufferAttribute(this.waveBuffer, 1);
+    const waveNode = storage(value, 'float', this.waveBuffer.length);
 
-    // compute (shader-node)
+    // 计算 (shader-node)
     const computeShaderFn = tslFn(() => {
       const index = float(instanceIndex);
-      // pitch
+      // 音高
       const time = index.mul(this.pitch);
       let wave = waveNode.element(time);
-      // delay
+      // 延迟
       for (let i = 1; i < 7; i++) {
         const waveOffset = waveNode.element(
           index.sub(this.delayOffset.mul(this.sampleRate).mul(i)).mul(this.pitch)
@@ -194,11 +196,11 @@ export class Model {
       }
 
       // store
-      const waveStorageElementNode = waveStorageNode.element(instanceIndex);
-      waveStorageElementNode.assign(wave);
+      const elementNode = waveStorageNode.element(instanceIndex);
+      elementNode.assign(wave);
     });
 
-    // compute
+    // 计算
     this.computeNode = computeShaderFn().compute(this.waveBuffer.length);
   }
 
@@ -262,6 +264,7 @@ export class Model {
     if (this.currentAudio) {
       this.currentAudio.stop();
     }
+    this.container.onclick = null;
   }
 
   // 处理自适应

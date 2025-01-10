@@ -1,6 +1,6 @@
 <template>
   <div class="webgpu-page">
-    <div ref="container" title="点击页面可播放" class="page-inner"></div>
+    <div ref="container" title="点击页面可播放音频" class="page-inner"></div>
   </div>
 </template>
 
