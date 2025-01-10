@@ -105,7 +105,11 @@ export class Model {
     this.controls = new OrbitControls(this.camera, this.renderer?.domElement);
     this.controls.minDistance = 5;
     this.controls.maxDistance = 50;
+    // 惯性
     this.controls.enableDamping = true;
+    // 自动旋转
+    this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = 1;
     this.controls.update();
 
     this.initStats();
@@ -122,40 +126,45 @@ export class Model {
     this.gui.show();
   }
 
+  // 加载猴子模型
   private loadBuffer() {
+    const url = "suzanne_buffergeometry.json";
     const loader = new THREE.BufferGeometryLoader();
-    const url = "/examples/models/json/suzanne_buffergeometry.json";
+
+    loader.setPath("/examples/models/json/");
     loader.load(url, (geometry) => {
+      const material = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
       geometry.computeVertexNormals();
-      this.monkey = new THREE.Mesh(
-        geometry, 
-        new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 })
-      );
+
+      this.monkey = new THREE.Mesh(geometry, material);
       this.monkey.receiveShadow = true;
       this.monkey.scale.setScalar(5);
       this.monkey.rotation.y = Math.PI / 2;
       this.monkey.position.y = 4.5;
-      // add to collision layer
+      // 添加到碰撞层
       this.monkey.layers.enable(1);
       this.scene.add(this.monkey);
     });
   }
 
+  // 创建箱子
   private createBox() {
-    this.collisionBox = new THREE.Mesh(
-      new THREE.BoxGeometry(30, 1, 15), 
-      new THREE.MeshStandardMaterial()
-    );
+    const v3 = new THREE.Vector3();
+    const geometry = new THREE.BoxGeometry(30, 1, 15);
+    const material = new THREE.MeshStandardMaterial();
+
+    this.collisionBox = new THREE.Mesh(geometry, material);
     this.collisionBox.material.color.set(0x333333);
-    this.collisionBox.position.y = 12;
+    this.collisionBox.position.y = 15;
     this.collisionBox.scale.x = 3.5;
     this.collisionBox.layers.enable(1);
     this.collisionBox.castShadow = true;
+    
     this.scene.add(this.collisionBox);
-
-    this.collisionBoxPosUI = new THREE.Vector3().copy(this.collisionBox.position);
+    this.collisionBoxPosUI = v3.copy(this.collisionBox.position);
   }
 
+  // 创建地板
   private createFloor() {
     const geometry = new THREE.PlaneGeometry(1000, 1000);
     geometry.rotateX(-Math.PI / 2);
@@ -166,12 +175,14 @@ export class Model {
     this.scene.add(plane);
   }
 
+  // 核心计算
   private compute() {
-    const createBuffer = (type = 'vec3') => storage(
-      new THREE.InstancedBufferAttribute(new Float32Array(this.maxParticleCount * 4), 4), 
-      type, 
-      this.maxParticleCount
-    );
+    const createBuffer = () => {
+      const array = new Float32Array(this.maxParticleCount * 4);
+      const bufferAttr = new THREE.InstancedBufferAttribute(array, 4);
+      return storage(bufferAttr, 'vec3', this.maxParticleCount);
+    };
+
     const positionBuffer = createBuffer();
     const velocityBuffer = createBuffer();
     const ripplePositionBuffer = createBuffer();
@@ -234,7 +245,8 @@ export class Model {
       });
     });
     this.computeParticles = computeUpdate().compute(this.maxParticleCount);
-
+    
+    // rain
     const billboarding = tslFn(() => {
       const particlePosition = positionBuffer.toAttribute();
       const worldMatrix = modelWorldMatrix.toVar();
@@ -256,10 +268,25 @@ export class Model {
       modelViewMatrix[2][2] = 1;
       return cameraProjectionMatrix.mul(modelViewMatrix).mul(positionGeometry);
     });
+    this.createRain(billboarding);
 
+    // ripple
+    const rippleTime = rippleTimeBuffer.element(instanceIndex).x;
+    const rippleEffect = tslFn(() => {
+      const center = uv().add(vec2(-.5)).length().mul(7);
+      const distance = rippleTime.sub(center);
+      return distance.min(1).sub(distance.max(1).sub(1));
+    });
+    this.createRipple(rippleEffect, rippleTime, ripplePositionBuffer);
+
+    this.renderer?.compute(computeInit);
+  }
+
+  // 创建雨水
+  private createRain(fn: () => any) {
     const rainMaterial = new MeshBasicNodeMaterial();
     rainMaterial.colorNode = uv().distance(vec2(.5, 0)).oneMinus().mul(3).exp().mul(.1);
-    rainMaterial.vertexNode = billboarding();
+    rainMaterial.vertexNode = fn();
     rainMaterial.opacity = 0.2;
     rainMaterial.side = THREE.DoubleSide;
     rainMaterial.forceSinglePass = true;
@@ -273,18 +300,14 @@ export class Model {
       this.instanceCount,
     );
     this.scene.add(this.rainParticles);
+  }
 
-    const rippleTime = rippleTimeBuffer.element(instanceIndex).x;
-    const rippleEffect = tslFn(() => {
-      const center = uv().add(vec2(-.5)).length().mul(7);
-      const distance = rippleTime.sub(center);
-      return distance.min(1).sub(distance.max(1).sub(1));
-    });
-
+  // 创建涟漪
+  private createRipple(fn: () => any, time: any, buffer: any) {
     const rippleMaterial = new MeshBasicNodeMaterial();
-    rippleMaterial.colorNode = rippleEffect();
-    rippleMaterial.positionNode = positionGeometry.add(ripplePositionBuffer.toAttribute());
-    rippleMaterial.opacityNode = rippleTime.mul(0.3).oneMinus().max(0).mul(.5);
+    rippleMaterial.colorNode = fn();
+    rippleMaterial.positionNode = positionGeometry.add(buffer.toAttribute());
+    rippleMaterial.opacityNode = time.mul(0.3).oneMinus().max(0).mul(.5);
     rippleMaterial.side = THREE.DoubleSide;
     rippleMaterial.forceSinglePass = true;
     rippleMaterial.depthWrite = false;
@@ -307,10 +330,9 @@ export class Model {
 
     this.rippleParticles = new THREE.InstancedMesh(rippleGeometry, rippleMaterial, this.instanceCount);
     this.scene.add(this.rippleParticles);
-
-    this.renderer?.compute(computeInit);
   }
 
+  // 创建碰撞
   private createCollision() {
     this.collisionCamera.position.y = 50;
     this.collisionCamera.lookAt(0, 0, 0);
@@ -324,6 +346,7 @@ export class Model {
     this.collisionPosMaterial.colorNode = positionWorld;
   }
 
+  // 创建灯光
   private createLight() {
     const ambient = new THREE.AmbientLight(0x111111);
 
