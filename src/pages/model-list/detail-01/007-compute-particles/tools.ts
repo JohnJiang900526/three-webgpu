@@ -104,7 +104,7 @@ export class Model {
   private initGUI() {
     this.gui.add(this.gravity, 'value', -0.0098, 0, 0.0001).name('gravity');
     this.gui.add(this.bounce, 'value', 0.1, 1, 0.01).name('bounce');
-    this.gui.add(this.friction, 'value', 0.96, 0.99, 0.01).name('friction');
+    this.gui.add(this.friction, 'value', 0.90, 0.99, 0.01).name('friction');
     this.gui.add(this.size, 'value', 0.12, 0.5, 0.01).name('size');
     this.gui.show();
   }
@@ -134,9 +134,9 @@ export class Model {
       const randY = instanceIndex.add(2).hash();
       const randZ = instanceIndex.add(3).hash();
 
-      position.x = randX.mul(100).add(- 50);
+      position.x = randX.mul(100).add(-50);
       position.y = 0; // randY.mul( 10 );
-      position.z = randZ.mul(100).add(- 50);
+      position.z = randZ.mul(100).add(-50);
 
       color.assign(vec3(randX, randY, randZ));
     })().compute(this.particleCount);
@@ -149,13 +149,14 @@ export class Model {
       velocity.addAssign(vec3(0.00, this.gravity, 0.00));
       position.addAssign(velocity);
       velocity.mulAssign(this.friction);
+
       // floor
       If(position.y.lessThan(0), () => {
         position.y = 0;
         velocity.y = velocity.y.negate().mul(this.bounce);
         // floor friction
-        velocity.x = velocity.x.mul(.9);
-        velocity.z = velocity.z.mul(.9);
+        velocity.x = velocity.x.mul(0.9);
+        velocity.z = velocity.z.mul(0.9);
       });
     });
 
@@ -220,7 +221,7 @@ export class Model {
     this.container.onpointermove = (e) => {
       const x = (e.clientX / this.width) * 2 - 1;
       const y = -(e.clientY / this.height) * 2 + 1;
-      
+
       this.pointer.set(x, y);
       this.raycaster.setFromCamera(this.pointer, this.camera!);
       const intersects = this.raycaster.intersectObjects([this.plane], false);
