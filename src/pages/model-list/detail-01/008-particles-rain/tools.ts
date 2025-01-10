@@ -158,9 +158,11 @@ export class Model {
 
   private createFloor() {
     const geometry = new THREE.PlaneGeometry(1000, 1000);
-    geometry.rotateX(- Math.PI / 2);
+    geometry.rotateX(-Math.PI / 2);
 
-    const plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x050505 }));
+    const material = new THREE.MeshBasicMaterial({ color: 0x050505 });
+    const plane = new THREE.Mesh(geometry, material);
+
     this.scene.add(plane);
   }
 
@@ -187,11 +189,11 @@ export class Model {
       const randY = instanceIndex.add(randUint()).hash();
       const randZ = instanceIndex.add(randUint()).hash();
 
-      position.x = randX.mul(100).add(- 50);
+      position.x = randX.mul(100).add(-50);
       position.y = randY.mul(25);
-      position.z = randZ.mul(100).add(- 50);
+      position.z = randZ.mul(100).add(-50);
 
-      velocity.y = randX.mul(- .04).add(- .2);
+      velocity.y = randX.mul(-0.04).add(-0.2);
       rippleTime.x = 1000;
     })().compute(this.maxParticleCount);
 
@@ -258,7 +260,7 @@ export class Model {
     const rainMaterial = new MeshBasicNodeMaterial();
     rainMaterial.colorNode = uv().distance(vec2(.5, 0)).oneMinus().mul(3).exp().mul(.1);
     rainMaterial.vertexNode = billboarding();
-    rainMaterial.opacity = .2;
+    rainMaterial.opacity = 0.2;
     rainMaterial.side = THREE.DoubleSide;
     rainMaterial.forceSinglePass = true;
     rainMaterial.depthWrite = false;
@@ -268,7 +270,7 @@ export class Model {
     this.rainParticles = new THREE.InstancedMesh(
       new THREE.PlaneGeometry(0.1, 2), 
       rainMaterial, 
-      this.instanceCount
+      this.instanceCount,
     );
     this.scene.add(this.rainParticles);
 
@@ -282,25 +284,25 @@ export class Model {
     const rippleMaterial = new MeshBasicNodeMaterial();
     rippleMaterial.colorNode = rippleEffect();
     rippleMaterial.positionNode = positionGeometry.add(ripplePositionBuffer.toAttribute());
-    rippleMaterial.opacityNode = rippleTime.mul(.3).oneMinus().max(0).mul(.5);
+    rippleMaterial.opacityNode = rippleTime.mul(0.3).oneMinus().max(0).mul(.5);
     rippleMaterial.side = THREE.DoubleSide;
     rippleMaterial.forceSinglePass = true;
     rippleMaterial.depthWrite = false;
     rippleMaterial.depthTest = true;
     rippleMaterial.transparent = true;
 
-    // ripple geometry
+    // 涟漪几何
     const surfaceRippleGeometry = new THREE.PlaneGeometry(2.5, 2.5);
-    surfaceRippleGeometry.rotateX(- Math.PI / 2);
+    surfaceRippleGeometry.rotateX(-Math.PI / 2);
 
     const xRippleGeometry = new THREE.PlaneGeometry(1, 2);
-    xRippleGeometry.rotateY(- Math.PI / 2);
+    xRippleGeometry.rotateY(-Math.PI / 2);
 
     const zRippleGeometry = new THREE.PlaneGeometry(1, 2);
     const rippleGeometry = BufferGeometryUtils.mergeGeometries([
-      surfaceRippleGeometry, 
-      xRippleGeometry, 
-      zRippleGeometry
+      surfaceRippleGeometry,
+      xRippleGeometry,
+      zRippleGeometry,
     ]);
 
     this.rippleParticles = new THREE.InstancedMesh(rippleGeometry, rippleMaterial, this.instanceCount);
@@ -323,27 +325,27 @@ export class Model {
   }
 
   private createLight() {
-    const dirLight = new THREE.DirectionalLight(0xffffff, .5);
-    dirLight.castShadow = true;
-    dirLight.position.set(3, 17, 17);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 50;
-    dirLight.shadow.camera.right = 25;
-    dirLight.shadow.camera.left = -25;
-    dirLight.shadow.camera.top = 25;
-    dirLight.shadow.camera.bottom = -25;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.bias = -0.01;
+    const light = new THREE.DirectionalLight(0xffffff, 0.5);
+    light.castShadow = true;
+    light.position.set(3, 17, 17);
+    light.castShadow = true;
+    light.shadow.camera.near = 1;
+    light.shadow.camera.far = 50;
+    light.shadow.camera.right = 25;
+    light.shadow.camera.left = -25;
+    light.shadow.camera.top = 25;
+    light.shadow.camera.bottom = -25;
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    light.shadow.bias = -0.01;
 
-    this.scene.add(dirLight);
-    this.scene.add(new THREE.AmbientLight(0x111111));
+    const ambient = new THREE.AmbientLight(0x111111);
+    this.scene.add(light, ambient);
   }
 
   // 判断是否为移动端
   isMobile() {
-    const userAgent = window.navigator.userAgent.toLowerCase();
+    const userAgent = navigator.userAgent.toLowerCase();
     return userAgent.includes("mobile");
   }
 
