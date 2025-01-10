@@ -218,7 +218,10 @@ export class Model {
 
   private bind() {
     this.container.onpointermove = (e) => {
-      this.pointer.set((e.clientX / this.width) * 2 - 1, - (e.clientY / this.height) * 2 + 1);
+      const x = (e.clientX / this.width) * 2 - 1;
+      const y = -(e.clientY / this.height) * 2 + 1;
+      
+      this.pointer.set(x, y);
       this.raycaster.setFromCamera(this.pointer, this.camera!);
       const intersects = this.raycaster.intersectObjects([this.plane], false);
 
