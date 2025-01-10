@@ -325,6 +325,8 @@ export class Model {
   }
 
   private createLight() {
+    const ambient = new THREE.AmbientLight(0x111111);
+
     const light = new THREE.DirectionalLight(0xffffff, 0.5);
     light.castShadow = true;
     light.position.set(3, 17, 17);
@@ -335,12 +337,10 @@ export class Model {
     light.shadow.camera.left = -25;
     light.shadow.camera.top = 25;
     light.shadow.camera.bottom = -25;
-    light.shadow.mapSize.width = 2048;
-    light.shadow.mapSize.height = 2048;
+    light.shadow.mapSize.set(2048, 2048);
     light.shadow.bias = -0.01;
 
-    const ambient = new THREE.AmbientLight(0x111111);
-    this.scene.add(light, ambient);
+    this.scene.add(ambient, light);
   }
 
   // 判断是否为移动端
