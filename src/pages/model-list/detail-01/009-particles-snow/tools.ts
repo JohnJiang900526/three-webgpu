@@ -29,7 +29,7 @@ export class Model {
   private gui: GUI;
   private maxParticleCount: number;
   private computeParticles: null | any;
-  private postProcessing: null | any;
+  private postProcessing: null | PostProcessing;
   private collisionCamera: THREE.OrthographicCamera;
   private collisionPosRT: THREE.RenderTarget;
   private collisionPosMaterial: MeshBasicNodeMaterial;
@@ -65,6 +65,7 @@ export class Model {
   init() {
     // 场景
     this.scene = new THREE.Scene();
+    // 添加雾霾
     this.scene.fog = new THREE.Fog(0x0f3c37, 5, 40);
 
     // 相机
@@ -198,15 +199,11 @@ export class Model {
   }
 
   private createParticle() {
-    const createBuffer = (type = "vec3") =>
-      storage(
-        new THREE.InstancedBufferAttribute(
-          new Float32Array(this.maxParticleCount * 4),
-          4
-        ),
-        type,
-        this.maxParticleCount
-      );
+    const createBuffer = (type: string = "vec3") => {
+      const float32Array = new Float32Array(this.maxParticleCount * 4);
+      const bufferAttr = new THREE.InstancedBufferAttribute(float32Array, 4);
+      return storage(bufferAttr, type, this.maxParticleCount);
+    };
 
     const positionBuffer = createBuffer();
     const scaleBuffer = createBuffer();
@@ -232,12 +229,10 @@ export class Model {
       position.z = randZ.mul(100).add(-50);
 
       scale.xyz = instanceIndex.add(Math.random()).hash().mul(0.8).add(0.2);
-      staticPositionBuffer
-        .element(instanceIndex)
-        .assign(vec3(1000, 10000, 1000));
-      particleData.y = randY.mul(-0.1).add(-0.02);
+      staticPositionBuffer.element(instanceIndex).assign(vec3(1000, 10000, 1000));
 
       particleData.x = position.x;
+      particleData.y = randY.mul(-0.1).add(-0.02);
       particleData.z = position.z;
       particleData.w = randX;
     })().compute(this.maxParticleCount);
@@ -265,9 +260,11 @@ export class Model {
         position.x = particleData.x.add(
           timer.mul(random.mul(random)).mul(speed).sin().mul(3)
         );
+
         position.z = particleData.z.add(
           timer.mul(random).mul(speed).cos().mul(random.mul(10))
         );
+
         position.y = position.y.add(velocity);
       }).else(() => {
         staticPositionBuffer.element(instanceIndex).assign(position);
@@ -277,9 +274,9 @@ export class Model {
     this.computeParticles = computeUpdate().compute(this.maxParticleCount);
     // rain
     const geometry = new THREE.SphereGeometry(surfaceOffset, 5, 5);
-    const particle = (staticParticles?: boolean) => {
-      const posBuffer = staticParticles ? staticPositionBuffer : positionBuffer;
-      const layer = staticParticles ? 1 : 2;
+    const particle = (isStatic?: boolean) => {
+      const posBuffer = isStatic ? staticPositionBuffer : positionBuffer;
+      const layer = isStatic ? 1 : 2;
 
       const staticMaterial = new MeshStandardNodeMaterial({
         roughness: 0.9,
@@ -290,16 +287,16 @@ export class Model {
         .mul(scaleBuffer.toAttribute())
         .add(posBuffer.toAttribute());
 
-      const rainParticles = new THREE.InstancedMesh(
+      const particles = new THREE.InstancedMesh(
         geometry,
         staticMaterial,
         this.maxParticleCount
       );
-      rainParticles.castShadow = true;
-      rainParticles.layers.disableAll();
-      rainParticles.layers.enable(layer);
+      particles.castShadow = true;
+      particles.layers.disableAll();
+      particles.layers.enable(layer);
 
-      return rainParticles;
+      return particles;
     };
 
     const dynamicParticles = particle();
@@ -311,51 +308,47 @@ export class Model {
     this.renderer?.compute(computeInit);
   }
 
+  // 碰撞相机
   private createCollisionCamera() {
-    this.collisionCamera = new THREE.OrthographicCamera(
-      -50,
-      50,
-      50,
-      -50,
-      0.1,
-      50
-    );
+    this.collisionCamera = new THREE.OrthographicCamera(-50, 50, 50, -50, 0.1, 50);
     this.collisionCamera.position.y = 50;
     this.collisionCamera.lookAt(0, 0, 0);
     this.collisionCamera.layers.enable(1);
 
+    // 渲染目标
     this.collisionPosRT = new THREE.RenderTarget(1024, 1024);
     this.collisionPosRT.texture.type = THREE.HalfFloatType;
 
+    // 渲染材质
     this.collisionPosMaterial = new MeshBasicNodeMaterial();
     this.collisionPosMaterial.fog = false;
     this.collisionPosMaterial.toneMapped = false;
     this.collisionPosMaterial.colorNode = positionWorld.y;
   }
 
+  // 创建灯光
   private createLight() {
-    const dirLight = new THREE.DirectionalLight(0xf9ff9b, 9);
-    dirLight.castShadow = true;
-    dirLight.position.set(10, 10, 0);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 30;
-    dirLight.shadow.camera.right = 30;
-    dirLight.shadow.camera.left = -30;
-    dirLight.shadow.camera.top = 30;
-    dirLight.shadow.camera.bottom = -30;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.bias = -0.009;
+    const dir = new THREE.DirectionalLight(0xf9ff9b, 9);
+    dir.position.set(10, 10, 0);
+    dir.castShadow = true;
+    dir.shadow.camera.near = 1;
+    dir.shadow.camera.far = 30;
+    dir.shadow.camera.right = 30;
+    dir.shadow.camera.left = -30;
+    dir.shadow.camera.top = 30;
+    dir.shadow.camera.bottom = -30;
+    dir.shadow.mapSize.width = 2048;
+    dir.shadow.mapSize.height = 2048;
+    dir.shadow.bias = -0.009;
 
-    const hpLight = new THREE.HemisphereLight(0x0f3c37, 0x080d10, 100);
-    this.scene.add(dirLight, hpLight);
+    const hemisphere = new THREE.HemisphereLight(0x0f3c37, 0x080d10, 100);
+    this.scene.add(dir, hemisphere);
   }
 
   // 创建渲染器
   private createRenderer() {
     this.renderer = new WebGPURenderer({ antialias: true });
-    // @ts-ignore
+    // @ts-ignore 色调映射
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.width, this.height);
@@ -385,6 +378,8 @@ export class Model {
     this.controls?.update();
 
     // position
+    // .overrideMaterial
+    // 如果不为空，它将强制场景中的每个物体使用这里的材质来渲染。默认值为null
     this.scene.overrideMaterial = this.collisionPosMaterial;
     this.renderer?.setRenderTarget(this.collisionPosRT);
     this.renderer?.render(this.scene, this.collisionCamera);
@@ -396,7 +391,7 @@ export class Model {
     this.scene.overrideMaterial = null;
     this.renderer?.setRenderTarget(null);
 
-    this.postProcessing.render();
+    this.postProcessing?.render();
   }
 
   private resizeHandle() {
