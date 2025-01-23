@@ -65,4 +65,4 @@ const routerList: RouteRecordRaw[] = [
   },
 ];
 
-export default routerList;
+export default routerList.reverse();
