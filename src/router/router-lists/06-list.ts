@@ -4,7 +4,7 @@ import type { RouteRecordRaw } from "vue-router";
 import VideoPanorama from "@/pages/model-list/detail-06/051-video-panorama";
 import WebaudioOrientation from "@/pages/model-list/detail-06/052-webaudio-orientation";
 import WebaudioSandbox from "@/pages/model-list/detail-06/053-webaudio-sandbox";
-import WebgpuSkinning from "@/pages/model-list/detail-06/054-webgpu-skinning";
+import HandinputCubes from "@/pages/model-list/detail-06/054-vr-handinput-cubes";
 import WebaudioTiming from "@/pages/model-list/detail-06/055-webaudio-timing";
 import WebaudioVisualizer from "@/pages/model-list/detail-06/056-webaudio-visualizer";
 import ArCones from "@/pages/model-list/detail-06/057-ar-cones";
@@ -29,9 +29,9 @@ const routerList: RouteRecordRaw[] = [
     component: WebaudioSandbox,
   },
   {
-    path: '/list/webgpu-skinning',
-    meta: {title: "webgpu-skinning 油漆"},
-    component: WebgpuSkinning,
+    path: '/list/vr-handinput-cubes',
+    meta: {title: "vr-handinput-cubes 手输立方体"},
+    component: HandinputCubes,
   },
   {
     path: '/list/webaudio-timing',
@@ -61,7 +61,7 @@ const routerList: RouteRecordRaw[] = [
   },
   {
     path: '/list/vr-handinput',
-    meta: {title: "vr-handinput VR手写"},
+    meta: {title: "vr-handinput VR手输"},
     component: VrHandinput,
   },
 ];
