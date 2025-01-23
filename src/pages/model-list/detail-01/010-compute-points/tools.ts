@@ -3,186 +3,69 @@ import GUI from 'lil-gui';
 import Stats from 'stats.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import WebGPURenderer from '@/common/jsm/renderers/webgpu/WebGPURenderer.js';
-import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js';
-import { FlakesTexture } from 'three/examples/jsm/textures/FlakesTexture.js';
+import { 
+  tslFn, uniform, storage, attribute, 
+  float, vec2, vec3, color, instanceIndex, 
+  PointsNodeMaterial 
+} from '@/common/jsm/nodes/Nodes.js';
 
 export class Model {
   private width: number;
   private height: number;
-  private aspect: number;
   private container: HTMLDivElement;
   private scene: THREE.Scene;
   private renderer: null | WebGPURenderer;
-  private camera: null | THREE.PerspectiveCamera;
+  private camera: null | THREE.OrthographicCamera;
   private stats: null | Stats;
   private animateNumber: number;
 
-  private controls: null | OrbitControls;
   private gui: GUI;
-  private light: THREE.Mesh;
-  private group: THREE.Group;
+  private computeNode: any;
+  private pointerVector: THREE.Vector2;
+  private scaleVector: THREE.Vector2;
   constructor(container: HTMLDivElement) {
     this.container = container;
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    this.aspect = this.width/this.height;
     this.scene = new THREE.Scene();
     this.renderer = null;
     this.camera = null;
     this.stats = null;
     this.animateNumber = 0;
 
-    this.controls = null;
-    this.light = new THREE.Mesh();
-    this.group = new THREE.Group();
     this.gui = new GUI({
       title: "控制面板",
       autoPlace: false,
       container: this.container,
     });
-    this.gui.hide();
+    this.computeNode = null;
+    this.pointerVector = new THREE.Vector2(-10.0, -10.0);
+    this.scaleVector = new THREE.Vector2(1, 1);
   }
 
   init() {
     // 场景
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x333333);
-    this.scene.add(this.group);
 
     // 相机
-    this.camera = new THREE.PerspectiveCamera(27, this.aspect, 0.25, 50);
-    this.camera.position.z = 10;
+    this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, 0, 1);
+    this.camera.position.z = 1;
 
-    // 加载环境信息
-    this.loadCube();
-    // 加载几何模型
-    this.createGeometry();
-    // 灯光
-    this.createLight();
     // 渲染器
     this.createRenderer();
-
-    // 控制器
-    this.controls = new OrbitControls(this.camera, this.renderer?.domElement);
-    this.controls.minDistance = 3;
-    this.controls.maxDistance = 30;
-    this.controls.update();
+    // particles
+    this.createParticles();
 
     this.initStats();
+    this.initGUI();
+    this.bind();
     this.resize();
   }
 
-  // 创建灯光
-  private createLight() {
-    const geometry = new THREE.SphereGeometry(0.05, 8, 8);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const light = new THREE.PointLight(0xffffff, 30);
-
-    this.light = new THREE.Mesh(geometry,material);
-    this.light.add(light);
-    this.scene.add(this.light);
-  }
-
-  private createGeometry() {
-    const geometry = new THREE.SphereGeometry(0.8, 64, 32);
-    const textureLoader = new THREE.TextureLoader();
-
-    const diffuse = textureLoader.load('/examples/textures/carbon/Carbon.png');
-    diffuse.colorSpace = THREE.SRGBColorSpace;
-    diffuse.wrapS = THREE.RepeatWrapping;
-    diffuse.wrapT = THREE.RepeatWrapping;
-    diffuse.repeat.set(10, 10);
-
-    const normalMap = textureLoader.load('/examples/textures/carbon/Carbon_Normal.png');
-    normalMap.wrapS = THREE.RepeatWrapping;
-    normalMap.wrapT = THREE.RepeatWrapping;
-    normalMap.repeat.set(10, 10);
-
-    const normalMap2 = textureLoader.load('/examples/textures/water/Water_1_M_Normal.jpg');
-
-    const normalMap3 = new THREE.CanvasTexture(new FlakesTexture());
-    normalMap3.wrapS = THREE.RepeatWrapping;
-    normalMap3.wrapT = THREE.RepeatWrapping;
-    normalMap3.repeat.set(10, 6);
-    normalMap3.anisotropy = 16;
-
-    const normalMap4 = textureLoader.load('/examples/textures/golfball.jpg');
-
-    const clearcoatNormalMap = textureLoader.load('/examples/textures/pbr/Scratched_gold/Scratched_gold_01_1K_Normal.png');
-
-    {
-      const material = new THREE.MeshPhysicalMaterial({
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.1,
-        metalness: 0.9,
-        roughness: 0.5,
-        color: 0x0000ff,
-        normalMap: normalMap3,
-        normalScale: new THREE.Vector2(0.15, 0.15)
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.x = -1;
-      mesh.position.y = 1;
-      this.group.add(mesh);
-    }
-
-    {
-      const material = new THREE.MeshPhysicalMaterial({
-        roughness: 0.5,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.1,
-        map: diffuse,
-        normalMap: normalMap
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.x = 1;
-      mesh.position.y = 1;
-      this.group.add(mesh);
-    }
-
-    {
-      const material = new THREE.MeshPhysicalMaterial({
-        metalness: 0.0,
-        roughness: 0.1,
-        clearcoat: 1.0,
-        normalMap: normalMap4,
-        clearcoatNormalMap: clearcoatNormalMap,
-        // y scale is negated to compensate for normal map handedness.
-        clearcoatNormalScale: new THREE.Vector2(2.0, -2.0)
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.x = -1;
-      mesh.position.y = -1;
-      this.group.add(mesh);
-    }
-
-    {
-      const material = new THREE.MeshPhysicalMaterial({
-        clearcoat: 1.0,
-        metalness: 1.0,
-        color: 0xff0000,
-        normalMap: normalMap2,
-        normalScale: new THREE.Vector2(0.15, 0.15),
-        clearcoatNormalMap: clearcoatNormalMap,
-        // y scale is negated to compensate for normal map handedness.
-        clearcoatNormalScale: new THREE.Vector2(2.0, - 2.0)
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.x = 1;
-      mesh.position.y = -1;
-      this.group.add(mesh);
-    }
-  }
-
-  private loadCube() {
-    const loader = new HDRCubeTextureLoader();
-    const urls = ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr'];
-
-    loader.setPath('/examples/textures/cube/pisaHDR/');
-    loader.load(urls, (texture) => {
-      this.scene.background = texture;
-      this.scene.environment = texture;
-    });
+  private initGUI() {
+    this.gui.add(this.scaleVector, 'x', 0, 1, 0.01);
+    this.gui.add(this.scaleVector, 'y', 0, 1, 0.01);
   }
 
   // 判断是否为移动端
@@ -191,14 +74,86 @@ export class Model {
     return userAgent.includes("mobile");
   }
 
+  private createParticles() {
+    // initialize particles
+    const particleNum = 300000;
+    // vec2
+    const particleSize = 2;
+
+    const particleArray = new Float32Array(particleNum * particleSize);
+    const velocityArray = new Float32Array(particleNum * particleSize);
+
+    // create buffers
+    const particleBuffer = new THREE.InstancedBufferAttribute(particleArray, 2);
+    const velocityBuffer = new THREE.InstancedBufferAttribute(velocityArray, 2);
+
+    const particleBufferNode = storage(particleBuffer, 'vec2', particleNum);
+    const velocityBufferNode = storage(velocityBuffer, 'vec2', particleNum);
+
+    // create function
+    const computeShaderFn = tslFn(() => {
+      const particle = particleBufferNode.element(instanceIndex);
+      const velocity = velocityBufferNode.element(instanceIndex);
+
+      const pointer = uniform(this.pointerVector);
+      const limit = uniform(this.scaleVector);
+
+      const position = particle.add(velocity).temp();
+
+      velocity.x = position.x.abs().greaterThanEqual(limit.x).cond(velocity.x.negate(), velocity.x);
+      velocity.y = position.y.abs().greaterThanEqual(limit.y).cond(velocity.y.negate(), velocity.y);
+      position.assign(position.min(limit).max(limit.negate()));
+
+      const pointerSize = 0.05;
+      const distanceFromPointer = pointer.sub(position).length();
+      particle.assign(distanceFromPointer.lessThanEqual(pointerSize).cond(vec3(), position));
+    });
+
+    // compute
+    this.computeNode = computeShaderFn().compute(particleNum);
+    this.computeNode.onInit = (e: any) => {
+      const precomputeShaderNode = tslFn(() => {
+        const particleIndex = float(instanceIndex);
+        const randomAngle = particleIndex.mul(.005).mul(Math.PI * 2);
+        const randomSpeed = particleIndex.mul(0.00000001).add(0.0000001);
+
+        const velX = randomAngle.sin().mul(randomSpeed);
+        const velY = randomAngle.cos().mul(randomSpeed);
+        const velocity = velocityBufferNode.element(instanceIndex);
+        velocity.xy = vec2(velX, velY);
+      });
+
+      e.renderer.compute(precomputeShaderNode().compute(particleNum));
+    };
+
+    // use a compute shader to animate the point cloud's vertex data.
+    const particleNode = attribute('particle', 'vec2');
+    const pointsGeometry = new THREE.BufferGeometry();
+
+    // single vertex ( not triangle )
+    pointsGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)); 
+    // dummy the position points as instances
+    pointsGeometry.setAttribute('particle', particleBuffer); 
+    // force render points as instances ( not triangle )
+    pointsGeometry.drawRange.count = 1; 
+
+    const pointsMaterial = new PointsNodeMaterial();
+    pointsMaterial.colorNode = particleNode.add(color(0xFFFFFF));
+    pointsMaterial.positionNode = particleNode;
+
+    const points = new THREE.Points(pointsGeometry, pointsMaterial);
+    // @ts-ignore
+    points.count = particleNum;
+    // @ts-ignore
+    points.isInstancedMesh = true;
+    this.scene.add(points);
+  }
+
   // 创建渲染器
   private createRenderer() {
     this.renderer = new WebGPURenderer({antialias: true});
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.width, this.height);
-    // @ts-ignore
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
     this.renderer.setAnimationLoop(() => {
       this.animate();
     });
@@ -221,32 +176,19 @@ export class Model {
 
   // 持续动画
   private animate() {
-    {
-      const timer = (Date.now()) * 0.00025/2;
-      this.light.position.set(
-        Math.sin(timer * 7) * 3,
-        Math.cos(timer * 5) * 4,
-        Math.cos(timer * 3) * 3,
-      );
-
-      this.group.children.forEach((item) => {
-        item.rotation.y += 0.005;
-      });
-    }
-
     this.stats?.update();
-    this.controls?.update();
 
     // 执行渲染
+    if (this.computeNode) {
+      this.renderer?.compute(this.computeNode);
+    }
     this.renderer?.render(this.scene, this.camera!);
   }
 
   private resizeHandle() {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    this.aspect = this.width/this.height;
 
-    this.camera!.aspect = this.aspect;
     // 更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
     this.camera!.updateProjectionMatrix();
 
@@ -257,6 +199,21 @@ export class Model {
   dispose() {
     window.cancelAnimationFrame(this.animateNumber);
     window.onresize = null;
+    this.container.onmousemove = null;
+  }
+
+  private bind() {
+    this.container.onmousemove = (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const width = this.width;
+      const height = this.height;
+
+      const a = (x / width - 0.5) * 2.0;
+      const b = (-y / height + 0.5) * 2.0;
+      this.pointerVector.set(a, b);
+    };
   }
 
   // 处理自适应
