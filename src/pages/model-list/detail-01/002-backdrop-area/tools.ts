@@ -232,16 +232,11 @@ export class Model {
 
   // 性能统计
   private initStats() {
-    // @ts-ignore
-    this.stats = Stats();
-    // @ts-ignore
-    this.stats.domElement.style.position = "absolute";
-    // @ts-ignore
-    this.stats.domElement.style.bottom = "0px";
-    // @ts-ignore
-    this.stats.domElement.style.top = "unset";
-    // @ts-ignore
-    this.container.appendChild(this.stats.domElement);
+    this.stats = new Stats();
+    this.stats.dom.style.position = "absolute";
+    this.stats.dom.style.bottom = "0px";
+    this.stats.dom.style.top = "unset";
+    this.container.appendChild(this.stats.dom);
   }
 
   // 持续动画
